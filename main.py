@@ -1,21 +1,25 @@
-import datetime
-
-import discord
+# main.py
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-bot = discord.Bot()
+from bot_singleton import bot
 
-token = str(os.getenv("TOKEN"))
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} is ready and online")
+class CtrlAltDefeat:
+    token = str(os.getenv("TOKEN"))
 
-# get all files in the cogs folder
-for filename in os.listdir("./cogs"):
-    if filename.endswith(".py"):
-        bot.load_extension(f"cogs.{filename[:-3]}") # load the cog
+    def __init__(self):
+        # Bind the on_ready method to the bot instance
+        bot.on_ready = self.on_ready.__get__(bot)
+        self.load_cogs()
+        bot.run(self.token)
 
-bot.run(token) # run the bot with the token
+    async def on_ready(self):
+        print(f"{bot.user} is ready and online")
+
+    def load_cogs(self):
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                bot.load_extension(f"cogs.{filename[:-3]}")
+
+
+bot_instance = CtrlAltDefeat()
