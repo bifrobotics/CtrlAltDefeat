@@ -152,6 +152,7 @@ class Misc(commands.Cog):
                                                                           }))
         # Add a reaction to the message
         await alert_msg.add_reaction("👍")
+        await alert_msg.add_reaction("👎")
 
         # Send a response to the user
         await ctx.respond(embed=self.utils.create_custom_embed(ctx, name="Interest Registered!",
@@ -196,6 +197,24 @@ class Misc(commands.Cog):
             **Step 4:** We will answer, and let you in.
 
             We're excited to see you there!
+            """
+            await member.send(embed=self.utils.create_custom_embed(None, name="Event Details", description=event_details, embed_type=utils.EmbedType.INFO))
+        if user.id == 640575886617477139 and reaction.emoji == "👎":
+            # Extract member ID from the message content and fetch the member
+            print(reaction.message.embeds[0].description.split('`')[1])
+            member_id = int(reaction.message.embeds[0].description.split('`')[1])
+            member = self.bot.get_guild(1108189336765218999).get_member(member_id)
+
+            #remove from interested
+            guild_config = utils.GuildDataManager.get_guild_config(1108189336765218999)
+            guild_config.interested_members.remove(member_id)
+            utils.GuildDataManager.save_guild_config(1108189336765218999, guild_config)
+
+            # Send event details to the member
+            event_details = f"""
+            Hello {member.name}!
+
+            Thanks for showing interest in our workshop. Unfortunately, we were unable to verify your identity. If you believe this is a mistake, please contact a team captain.`
             """
             await member.send(embed=self.utils.create_custom_embed(None, name="Event Details", description=event_details, embed_type=utils.EmbedType.INFO))
 
