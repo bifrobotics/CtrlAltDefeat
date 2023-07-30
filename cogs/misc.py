@@ -177,7 +177,16 @@ class Misc(commands.Cog):
             Address: `4285 Santa Monica Terrace, Fremont, CA 94539`
             
             *What do I need to bring?*
+            - Water bottle
             
+            - Design: Pencil and paper. (preferably graph paper)
+            - Mechanical: None 
+            - Electrical: None
+            - Programming: Bring your laptop and charger. We'll be using Java and IntelliJ IDEA, so make sure you have those installed.
+            
+            *Psst! Design and Mechanical, bring any household materials you think you might need to protect a 10 foot egg drop!*
+            
+            **But most importantly, don't forget to bring yourself!**
             
             *Note: The workshop is at my house, and I live in a gated community which means that you will have to get through security. Here are the steps to do so.*
             
