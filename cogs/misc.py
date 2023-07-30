@@ -124,31 +124,47 @@ class Misc(commands.Cog):
     @discord.guild_only()
     async def interested(self, ctx: discord.ApplicationContext):
         # Fetch user information
-        member = ctx.user
+        member: discord.Member = ctx.user
 
-        # Send a DM to you (replace YOUR_DISCORD_ID with your actual Discord ID)
+        # Update the guild config to add the member's ID to the list of interested members
+        guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
+        if ctx.user.id in guild_config.interested_members:
+            embed = self.utils.create_custom_embed(ctx, "Already Interested", "You've already shown interest in attending the event!", utils.EmbedType.WARNING)
+            await ctx.respond(embed=embed)
+            return
+        guild_config.interested_members.append(ctx.user.id)
+        utils.GuildDataManager.save_guild_config(ctx.guild.id, guild_config)
+
+        # Send a DM to owner (tycho)
         owner = ctx.guild.get_member(640575886617477139)
         alert_msg = await owner.send(embed=self.utils.create_custom_embed(None, name="Interest Notification",
-                                                              description=f"{member.name}#{member.discriminator} ({member.id}) has shown interest in attending the event!", embed_type=utils.EmbedType.NEUTRAL,
-                                                              fields={
-                                                                  "Division": utils.GuildDataManager.get_member_data(member).division,
-                                                                  "Subdivision": utils.GuildDataManager.get_member_data(member).subdivision,
-                                                                  "Time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                                                                  "Nick:": member.nick
-                                                              }))
+                                                                          description=f"{member.name}#{member.discriminator} (`{member.id}`) has shown interest in attending the event!",
+                                                                          embed_type=utils.EmbedType.NEUTRAL,
+                                                                          fields={
+                                                                              "Division": utils.GuildDataManager.get_member_data(
+                                                                                  member).division,
+                                                                              "Subdivision": str(
+                                                                                  utils.GuildDataManager.get_member_data(
+                                                                                      member).subdivision),
+                                                                              "Time": datetime.now().strftime(
+                                                                                  "%m/%d/%Y, %H:%M:%S"),
+                                                                              "Nick:": member.nick
+                                                                          }))
         # Add a reaction to the message
         await alert_msg.add_reaction("👍")
 
         # Send a response to the user
-        await ctx.respond(embed=self.utils.create_custom_embed(ctx, name="Interest Registered!", description="Your interest has been registered. You'll receive event details soon after verification.", embed_type=utils.EmbedType.SUCCESS))
+        await ctx.respond(embed=self.utils.create_custom_embed(ctx, name="Interest Registered!",
+                                                               description="Your interest has been registered. You'll receive event details soon after verification.",
+                                                               embed_type=utils.EmbedType.SUCCESS))
 
     # Add a listener to check for your manual verification (e.g., reacting with a thumbs up emoji to the DM)
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user):
         if user.id == 640575886617477139 and reaction.emoji == "👍":
             # Extract member ID from the message content and fetch the member
-            print(reaction.message.embeds[0].description.split('(')[-1].split(')')[0])
-            member_id = int(reaction.message.embeds[0].description.split('(')[-1].split(')')[0])
+            print(reaction.message.embeds[0].description.split('`')[1])
+            member_id = int(reaction.message.embeds[0].description.split('`')[1])
             member = self.bot.get_guild(1108189336765218999).get_member(member_id)
 
             # Send event details to the member
@@ -159,6 +175,9 @@ class Misc(commands.Cog):
 
             When: `Monday @1PM`
             Address: `4285 Santa Monica Terrace, Fremont, CA 94539`
+            
+            *What do I need to bring?*
+            
             
             *Note: The workshop is at my house, and I live in a gated community which means that you will have to get through security. Here are the steps to do so.*
             

@@ -2,7 +2,8 @@ import datetime
 import enum
 import json
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
+from typing import List
 
 import discord
 
@@ -29,6 +30,7 @@ class EmbedType(enum.Enum):
         color=discord.Color.green(),
         title=":white_check_mark: Success! :white_check_mark:",
         description="The operation was successful.",
+        thumbnail_url="https://cdn.discordapp.com/attachments/1126591811016740894/1134940896174026933/Processed_Checkmark.png",
         footer_text="Powered by Ctrl+Alt+Defeat",
         footer_icon="https://cdn.discordapp.com/attachments/1126591811016740894/1134181700885287002/DALLE_2023-07-25_18.45.42_-_Background__Digital_circuitry_in_cool_blues_and_metallic_grays._Center__Detailed_robotic_claw_hovering_over_three_symbolized_buttons._First__Joystick_.png"
     )
@@ -36,6 +38,7 @@ class EmbedType(enum.Enum):
         color=discord.Color.red(),
         title=":x: Error! :x:",
         description="An error occurred during the operation.",
+        thumbnail_url="https://cdn.discordapp.com/attachments/860656459507171368/930998500626399232/error.png",
         footer_text="Powered by CtrlAltDefeat",
         footer_icon="https://cdn.discordapp.com/attachments/1126591811016740894/1134181700885287002/DALLE_2023-07-25_18.45.42_-_Background__Digital_circuitry_in_cool_blues_and_metallic_grays._Center__Detailed_robotic_claw_hovering_over_three_symbolized_buttons._First__Joystick_.png"
     )
@@ -43,6 +46,7 @@ class EmbedType(enum.Enum):
         color=discord.Color.orange(),
         title=":warning: Warning! :warning:",
         description="There's something you should be aware of.",
+        thumbnail_url="https://cdn.discordapp.com/attachments/1108194676407808121/1135007384822095902/Screenshot_2023-07-29_at_5.30.39_PM-removebg-preview_1.png",
         footer_text="Powered by CtrlAltDefeat",
         footer_icon="https://cdn.discordapp.com/attachments/1126591811016740894/1134181700885287002/DALLE_2023-07-25_18.45.42_-_Background__Digital_circuitry_in_cool_blues_and_metallic_grays._Center__Detailed_robotic_claw_hovering_over_three_symbolized_buttons._First__Joystick_.png"
     )
@@ -59,6 +63,7 @@ class EmbedType(enum.Enum):
         color=discord.Color.blue(),
         title=":blue_book: Info",
         description="Here's the detailed information you requested.",
+        thumbnail_url="https://cdn.discordapp.com/attachments/1108194676407808121/1135008361973301349/info_icon_transparent.png",
         footer_text="Powered by CtrlAltDefeat",
         footer_icon="https://cdn.discordapp.com/attachments/1126591811016740894/1134181700885287002/DALLE_2023-07-25_18.45.42_-_Background__Digital_circuitry_in_cool_blues_and_metallic_grays._Center__Detailed_robotic_claw_hovering_over_three_symbolized_buttons._First__Joystick_.png"
     )
@@ -150,8 +155,9 @@ class MemberData:
 
 
 @dataclass
-class GuildConfig:
+class GuildData:
     subdivision_to_role: dict[str, int]
+    interested_members: List[int] = field(default_factory=list)
 
 
 class GuildDataManager:
@@ -215,27 +221,27 @@ class GuildDataManager:
         return os.path.join(cls.GUILD_CONFIG_DIR, f"{guild_id}.json")
 
     @classmethod
-    def save_guild_config(cls, guild_id: int, config_data: GuildConfig) -> None:
+    def save_guild_config(cls, guild_id: int, config_data: GuildData) -> None:
         file_path = cls._get_guild_file_path(guild_id)
         os.makedirs(cls.GUILD_CONFIG_DIR, exist_ok=True)
         with open(file_path, "w") as f:
             json.dump(asdict(config_data), f)
 
     @classmethod
-    def load_guild_config(cls, guild_id: int) -> GuildConfig:
+    def load_guild_config(cls, guild_id: int) -> GuildData:
         file_path = cls._get_guild_file_path(guild_id)
         if os.path.exists(file_path):
             with open(file_path, "r") as f:
                 data = json.load(f)
-                return GuildConfig(**data)
+                return GuildData(**data)
         else:
             return None
 
     @classmethod
-    def get_guild_config(cls, guild_id: int) -> GuildConfig:
+    def get_guild_config(cls, guild_id: int) -> GuildData:
         config = cls.load_guild_config(guild_id)
         if config is None:
-            config = GuildConfig(subdivision_to_role={})
+            config = GuildData(subdivision_to_role={})
             cls.save_guild_config(guild_id, config)
         return config
 
