@@ -120,16 +120,16 @@ class Misc(commands.Cog):
         success_embed = self.utils.create_custom_embed(ctx, name="Success!", description="All member roles have been saved successfully!", embed_type=utils.EmbedType.SUCCESS)
         await ctx.respond(embed=success_embed)
 
-    @discord.slash_command(name="interested", description="Show interest in attending the event")
+    @discord.slash_command(name="rsvp", description="Show interest in attending the event")
     @discord.guild_only()
-    async def interested(self, ctx: discord.ApplicationContext):
+    async def rsvp(self, ctx: discord.ApplicationContext):
         # Fetch user information
         member: discord.Member = ctx.user
 
         # Update the guild config to add the member's ID to the list of interested members
         guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
         if ctx.user.id in guild_config.interested_members:
-            embed = self.utils.create_custom_embed(ctx, "Already Interested", "You've already shown interest in attending the event!", utils.EmbedType.WARNING)
+            embed = self.utils.create_custom_embed(ctx, "Already RSVPed", "You've already shown interest in attending this week's workshop!", utils.EmbedType.WARNING)
             await ctx.respond(embed=embed)
             return
         guild_config.interested_members.append(ctx.user.id)
@@ -137,7 +137,7 @@ class Misc(commands.Cog):
 
         # Send a DM to owner (tycho)
         owner = ctx.guild.get_member(640575886617477139)
-        alert_msg = await owner.send(embed=self.utils.create_custom_embed(None, name="Interest Notification",
+        alert_msg = await owner.send(embed=self.utils.create_custom_embed(None, name="RSVP Notification",
                                                                           description=f"{member.name}#{member.discriminator} (`{member.id}`) has shown interest in attending the event!",
                                                                           embed_type=utils.EmbedType.NEUTRAL,
                                                                           fields={
@@ -173,30 +173,29 @@ class Misc(commands.Cog):
             Hello {member.name}!
 
             Thanks for showing interest in our workshop. Here are the event details:
-
-            When: `Monday @1PM`
-            Address: `4285 Santa Monica Terrace, Fremont, CA 94539`
             
-            *What do I need to bring?*
-            - Water bottle
+            **When:** `Saturday @1-5PM`  
+            **Address:** `4285 Santa Monica Terrace, Fremont, CA 94539`
             
-            - Design: Pencil and paper. (preferably graph paper)
-            - Mechanical: None 
-            - Electrical: None
-            - Programming: Bring your laptop and charger. We'll be using Java and IntelliJ IDEA, so make sure you have those installed.
-            
-            *Psst! Design and Mechanical, bring any household materials you think you might need to protect a 10 foot egg drop!*
+            ### What do I need to bring?
+            - Water bottle  
+            - Pencil and paper  
+              *(preferably graph paper in a notebook)*
             
             **But most importantly, don't forget to bring yourself!**
             
-            *Note: The workshop is at my house, and I live in a gated community which means that you will have to get through security. Here are the steps to do so.*
+            ---
             
-            **Step 1:** Arrive at the gate.
-            **Step 2:** Go left to the visitor lane, and pull up to the keypad.
-            **Step 3:** The code to call is 032. Enter it, and it will call us.
-            **Step 4:** We will answer, and let you in.
-
+            ### Note: 
+            The workshop is at my house, and I live in a gated community. Here's how to get through security:
+            
+            1. **Arrive at the gate.**
+            2. **Go left to the visitor lane, and pull up to the keypad.**
+            3. **Enter the code `032` to call us.**
+            4. **We will answer and let you in.**
+            
             We're excited to see you there!
+
             """
             await member.send(embed=self.utils.create_custom_embed(None, name="Event Details", description=event_details, embed_type=utils.EmbedType.INFO))
         if user.id == 640575886617477139 and reaction.emoji == "👎":
@@ -217,6 +216,47 @@ class Misc(commands.Cog):
             Thanks for showing interest in our workshop. Unfortunately, we were unable to verify your identity. If you believe this is a mistake, please contact a team captain.`
             """
             await member.send(embed=self.utils.create_custom_embed(None, name="Event Details", description=event_details, embed_type=utils.EmbedType.INFO))
+
+    @discord.slash_command(name="clear_interested", description="Clear interested members.")
+    @discord.guild_only()
+    async def clear_interested(self, ctx: discord.ApplicationContext):
+        """Clear interested members."""
+        guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
+        guild_config.interested_members = []
+        utils.GuildDataManager.save_guild_config(ctx.guild.id, guild_config)
+
+        success_embed = self.utils.create_custom_embed(ctx, name="Success!", description="All interested members have been cleared successfully!", embed_type=utils.EmbedType.SUCCESS)
+        await ctx.respond(embed=success_embed)
+
+    @discord.slash_command(name="show_interested",
+                           description="Show a clean, organized embed with all interested members.")
+    @discord.guild_only()
+    async def show_interested(self, ctx: discord.ApplicationContext):
+        """Show a clean, organized embed with all interested members."""
+        guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
+        data = []
+        subdivision_count = {}  # To keep track of the number of members in each subdivision
+
+        for member_id in guild_config.interested_members:
+            member = ctx.guild.get_member(member_id)
+            member_data = utils.GuildDataManager.get_member_data(member)
+            data.append({
+                'name': member.name,
+                'value': f"Division: {member_data.division}\nSubdivision: {member_data.subdivision}"
+            })
+
+            # Update division and subdivision counts
+            subdivision_count[member_data.subdivision] = subdivision_count.get(member_data.subdivision, 0) + 1
+
+        # Add tally info to the embed
+        tally_info = {
+            'name': 'Tally Info',
+            'value': f"Total Interested Members: {len(guild_config.interested_members)}\n"
+                     f"Subdivision Count: {subdivision_count}"
+        }
+        data.append(tally_info)
+
+        await self.send_paginated_embed(ctx, data, "Interested Members")
 
 
 def setup(bot):
