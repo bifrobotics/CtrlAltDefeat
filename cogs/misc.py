@@ -184,6 +184,8 @@ class Misc(commands.Cog):
             
             **But most importantly, don't forget to bring yourself!**
             
+            We'll have some food and drinks available, but feel free to bring your own snacks if you'd like.
+            
             ---
             
             ### Note: 
