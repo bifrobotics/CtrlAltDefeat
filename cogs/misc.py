@@ -16,6 +16,10 @@ class Misc(commands.Cog):
     async def ping(self, ctx: discord.ApplicationContext):
         await ctx.respond(embed=self.utils.create_custom_embed(ctx, name="Pong!", description=f"Response time: `{round(self.bot.latency * 1000)}ms`", embed_type=utils.EmbedType.INFO))
 
+    @discord.slash_command(name="admin_ping", description="Ping command to test admin perms")
+    @discord.default_permissions(administrator=True)
+    async def admin_ping(self, ctx: discord.ApplicationContext):
+        await ctx.respond(embed=self.utils.create_custom_embed(ctx, name="Admin Pong!", description=f"Response time: `{round(self.bot.latency * 1000)}ms`", embed_type=utils.EmbedType.INFO))
 
 
     async def _user_autocomplete(self, ctx: discord.ApplicationContext, value: str):
@@ -51,7 +55,7 @@ class Misc(commands.Cog):
         await paginator.respond(ctx.interaction)
 
     @discord.slash_command(name="display_user_data", description="Displays user data in an embed.")
-    @commands.has_permissions(administrator=True)  # Ensure only admins can run this command
+    @discord.default_permissions(administrator=True)  # Ensure only admins can run this command
     @discord.option(name="user", description="Select a user", autocomplete=True)
     @discord.option(name="division", description="Select a division", autocomplete=_subdivision_autocomplete)
     async def display_user_data(self, ctx: discord.ApplicationContext, user: discord.Member = None,
@@ -219,10 +223,18 @@ class Misc(commands.Cog):
             """
             await member.send(embed=self.utils.create_custom_embed(None, name="Event Details", description=event_details, embed_type=utils.EmbedType.INFO))
 
+    #admin only command
     @discord.slash_command(name="clear_interested", description="Clear interested members.")
     @discord.guild_only()
+    @discord.default_permissions(administrator=True)  # Ensure only admins can run this command
     async def clear_interested(self, ctx: discord.ApplicationContext):
         """Clear interested members."""
+        # only allowed to use if you are guild owner
+        if ctx.user.id != ctx.guild.owner_id:
+            embed = self.utils.create_custom_embed(ctx, embed_type=utils.EmbedType.WARNING, description="You need to be the server owner to use this command!")
+            await ctx.respond(embed=embed, ephemeral=True)
+            return
+
         guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
         guild_config.interested_members = []
         utils.GuildDataManager.save_guild_config(ctx.guild.id, guild_config)
@@ -233,6 +245,7 @@ class Misc(commands.Cog):
     @discord.slash_command(name="show_interested",
                            description="Show a clean, organized embed with all interested members.")
     @discord.guild_only()
+    @discord.default_permissions(administrator=True)  # Ensure only admins can run this command
     async def show_interested(self, ctx: discord.ApplicationContext):
         """Show a clean, organized embed with all interested members."""
         guild_config = utils.GuildDataManager.get_guild_config(ctx.guild.id)
